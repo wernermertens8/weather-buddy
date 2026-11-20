@@ -229,8 +229,9 @@ function applyStaticText() {
   document.querySelectorAll("[data-i18n-aria]").forEach(function (el) {
     el.setAttribute("aria-label", t(el.dataset.i18nAria));
   });
-  langEnButton.classList.toggle("active", language === "en");
-  langNlButton.classList.toggle("active", language === "nl");
+  // (the "if" guards protect against a browser mixing an old cached page with this new script)
+  if (langEnButton) langEnButton.classList.toggle("active", language === "en");
+  if (langNlButton) langNlButton.classList.toggle("active", language === "nl");
 }
 
 function setLanguage(newLanguage) {
@@ -587,8 +588,8 @@ locationButton.addEventListener("click", useMyLocation);
 unitCButton.addEventListener("click", function () { setUnit("C"); });
 unitFButton.addEventListener("click", function () { setUnit("F"); });
 
-langEnButton.addEventListener("click", function () { setLanguage("en"); });
-langNlButton.addEventListener("click", function () { setLanguage("nl"); });
+if (langEnButton) langEnButton.addEventListener("click", function () { setLanguage("en"); });
+if (langNlButton) langNlButton.addEventListener("click", function () { setLanguage("nl"); });
 
 // When the page opens: load the saved language, unit and recent cities
 language = loadSaved("weatherBuddyLanguage", "en") === "nl" ? "nl" : "en";
