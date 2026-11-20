@@ -1,0 +1,4 @@
+# Keep private / not part of the website
+*.md
+*.zip
+.claude/

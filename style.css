@@ -1,0 +1,183 @@
+/* Green color scheme */
+:root {
+  --bg: #e8f5e9;          /* soft green page background */
+  --green-dark: #1b5e20;  /* headings, text */
+  --green: #2e7d32;       /* buttons */
+  --green-hover: #1b5e20;
+  --card: #ffffff;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--green-dark);
+  font-family: "Segoe UI", Arial, sans-serif;
+}
+
+.container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 40px 16px;
+  text-align: center;
+}
+
+h1 { margin: 0; }
+.subtitle { margin: 4px 0 24px; }
+
+/* Search row */
+#search-form { display: flex; gap: 8px; }
+
+#city-input {
+  flex: 1;
+  padding: 12px;
+  font-size: 1rem;
+  border: 2px solid #a5d6a7;
+  border-radius: 12px;
+  color: var(--green-dark);
+}
+#city-input:focus { outline: none; border-color: var(--green); }
+
+button {
+  padding: 12px 20px;
+  font-size: 1rem;
+  background: var(--green);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+}
+button:hover { background: var(--green-hover); }
+
+/* Friendly messages */
+.message { margin-top: 20px; font-size: 1.05rem; }
+
+/* Result card */
+.card {
+  margin-top: 24px;
+  padding: 24px;
+  background: var(--card);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(27, 94, 32, 0.15);
+}
+.card h2 { margin: 0; }
+.emoji { font-size: 4rem; margin-top: 8px; }
+.temp { font-size: 3.5rem; font-weight: bold; }
+.description { font-size: 1.2rem; }
+.advice {
+  margin: 20px 0 0;
+  padding: 12px;
+  background: var(--bg);
+  border-radius: 12px;
+  font-size: 1.05rem;
+}
+
+/* F5: details grid */
+.details {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-top: 20px;
+}
+.details div {
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 10px;
+}
+.details span { display: block; font-size: 1.3rem; font-weight: bold; }
+.details small { font-size: 0.85rem; }
+
+/* F6: forecast rows */
+#forecast-section h3 { margin: 24px 0 8px; }
+.forecast { display: flex; flex-direction: column; gap: 8px; }
+.day {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--card);
+  border-radius: 12px;
+  padding: 10px 16px;
+  box-shadow: 0 1px 4px rgba(27, 94, 32, 0.12);
+}
+.day .name { width: 60px; text-align: left; font-weight: bold; }
+.day .day-emoji { font-size: 1.5rem; }
+.day .range { width: 90px; text-align: right; }
+
+/* F12: use my location button */
+.location-button {
+  margin-top: 12px;
+  background: white;
+  color: var(--green);
+  border: 2px solid var(--green);
+}
+.location-button:hover { background: #c8e6c9; }
+
+/* F8: unit switch */
+.unit-switch { margin: 0 0 0 8px; display: inline-flex; vertical-align: middle; }
+.unit {
+  padding: 8px 16px;
+  background: white;
+  color: var(--green);
+  border: 2px solid var(--green);
+}
+.unit:first-child { border-radius: 12px 0 0 12px; }
+.unit:last-child { border-radius: 0 12px 12px 0; border-left: none; }
+.unit:hover { background: #c8e6c9; }
+.unit.active, .unit.active:hover { background: var(--green); color: white; }
+
+/* F9: recent city buttons */
+.recent {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.recent button {
+  padding: 6px 14px;
+  font-size: 0.9rem;
+  background: white;
+  color: var(--green);
+  border: 2px solid #a5d6a7;
+  border-radius: 20px;
+}
+.recent button:hover { background: #c8e6c9; }
+
+/* F15: other places with the same name */
+.alternatives {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.alternatives p { width: 100%; margin: 0; font-size: 0.9rem; }
+.alternatives button {
+  padding: 6px 14px;
+  font-size: 0.9rem;
+  background: white;
+  color: var(--green);
+  border: 2px solid var(--green);
+  border-radius: 20px;
+}
+.alternatives button:hover { background: #c8e6c9; }
+
+
+/* F11: phone layout */
+@media (max-width: 480px) {
+  .container { padding: 24px 12px; }
+  .temp { font-size: 3rem; }
+  .emoji { font-size: 3.5rem; }
+  .day .range { width: 80px; }
+}
+
+/* Footer with the version number */
+.footer {
+  text-align: center;
+  padding: 16px;
+  font-size: 0.85rem;
+  color: var(--green);
+}
+
+[hidden] { display: none !important; }

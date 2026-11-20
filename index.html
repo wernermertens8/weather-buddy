@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Safety net: only this page's own script and style may run, and the page may only talk to the three weather/place services -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src https://geocoding-api.open-meteo.com https://api.open-meteo.com https://api.bigdatacloud.net; base-uri 'none'; form-action 'none'">
+  <title>Weather Buddy</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="container">
+    <h1>🌿 Weather Buddy</h1>
+    <p class="subtitle">What should I wear today?</p>
+
+    <!-- F1: type a city and search -->
+    <form id="search-form">
+      <input id="city-input" type="text" placeholder="Type a city, e.g. London" autocomplete="off">
+      <button type="submit">Search</button>
+    </form>
+
+    <!-- F12: use my location -->
+    <button type="button" id="location-button" class="location-button">📍 Use my location</button>
+
+    <!-- F8: °C / °F switch -->
+    <div class="unit-switch" role="group" aria-label="Temperature unit">
+      <button type="button" id="unit-c" class="unit active">°C</button>
+      <button type="button" id="unit-f" class="unit">°F</button>
+    </div>
+
+    <!-- F9: recent cities -->
+    <div id="recent" class="recent" hidden></div>
+
+    <!-- F4: friendly messages (errors and loading) show here -->
+    <p id="message" class="message" hidden></p>
+
+    <!-- F15: other places with the same name -->
+    <div id="alternatives" class="alternatives" hidden></div>
+
+    <!-- F2 + F3: results show here -->
+    <section id="result" class="card" hidden>
+      <h2 id="city-name"></h2>
+      <div class="emoji" id="emoji"></div>
+      <div class="temp" id="temp"></div>
+      <div class="description" id="description"></div>
+
+      <!-- F5: extra details -->
+      <div class="details">
+        <div><span id="feels"></span><small>Feels like</small></div>
+        <div><span id="humidity"></span><small>Humidity</small></div>
+        <div><span id="wind"></span><small>Wind</small></div>
+        <div><span id="rain"></span><small>Chance of rain</small></div>
+      </div>
+
+      <p class="advice" id="advice"></p>
+    </section>
+
+    <!-- F6: 7-day forecast -->
+    <section id="forecast-section" hidden>
+      <h3>7-day forecast</h3>
+      <div class="forecast" id="forecast"></div>
+    </section>
+  </main>
+
+  <footer class="footer">Weather Buddy · Version 6</footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
