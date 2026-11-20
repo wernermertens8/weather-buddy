@@ -1,4 +1,4 @@
-// Weather Buddy - Version 7
+// Weather Buddy - Version 8
 // Steps: city name -> coordinates (geocoding) -> weather -> show it.
 // All temperatures are stored in °C. We convert to °F only when showing them.
 
@@ -50,7 +50,7 @@ const TEXT = {
     rain: "Chance of rain",
     forecastTitle: "7-day forecast",
     today: "Today",
-    footer: "Weather Buddy · Version 7",
+    footer: "Weather Buddy · Version 8",
     otherPlaces: function (name) { return "Other places called " + name + ":"; },
     yourLocation: "Your location",
     // messages
@@ -63,7 +63,7 @@ const TEXT = {
     geoTimeout: "Finding your location took too long. Try again or type a city instead. ⏱️",
     geoFailed: "Sorry, I couldn't find your location. Try typing a city instead. 🏙️",
     // weather descriptions
-    wClear: "Clear sky", wMostlyClear: "Mostly clear", wPartlyCloudy: "Partly cloudy", wOvercast: "Overcast",
+    wClear: "Clear sky", wClearNight: "Clear night", wMostlyClear: "Mostly clear", wPartlyCloudy: "Partly cloudy", wOvercast: "Overcast",
     wFog: "Foggy", wDrizzle: "Drizzle", wRain: "Rain", wSnow: "Snow",
     wRainShowers: "Rain showers", wSnowShowers: "Snow showers", wThunder: "Thunderstorm", wUnknown: "Unknown weather",
     // outfit advice
@@ -91,7 +91,7 @@ const TEXT = {
     rain: "Kans op regen",
     forecastTitle: "Weersverwachting 7 dagen",
     today: "Vandaag",
-    footer: "Weather Buddy · Versie 7",
+    footer: "Weather Buddy · Versie 8",
     otherPlaces: function (name) { return "Andere plaatsen met de naam " + name + ":"; },
     yourLocation: "Jouw locatie",
     loading: "Het weer wordt opgezocht... ⏳",
@@ -102,7 +102,7 @@ const TEXT = {
     geoBlocked: "Locatie is geblokkeerd. Sta het toe in je browser (het 📍-icoon bij de adresbalk) of typ een stad. 🔒",
     geoTimeout: "Je locatie vinden duurde te lang. Probeer het opnieuw of typ een stad. ⏱️",
     geoFailed: "Sorry, ik kon je locatie niet vinden. Typ in plaats daarvan een stad. 🏙️",
-    wClear: "Heldere lucht", wMostlyClear: "Grotendeels helder", wPartlyCloudy: "Half bewolkt", wOvercast: "Bewolkt",
+    wClear: "Heldere lucht", wClearNight: "Heldere nacht", wMostlyClear: "Grotendeels helder", wPartlyCloudy: "Half bewolkt", wOvercast: "Bewolkt",
     wFog: "Mistig", wDrizzle: "Motregen", wRain: "Regen", wSnow: "Sneeuw",
     wRainShowers: "Regenbuien", wSnowShowers: "Sneeuwbuien", wThunder: "Onweer", wUnknown: "Onbekend weer",
     advFreezing: "Vrieskou! Draag een dikke jas, muts, handschoenen en een sjaal. 🧣",
@@ -144,13 +144,16 @@ function save(key, value) {
 
 // ---------- Weather words and emojis ----------
 // Open-Meteo gives weather as a number code. This turns each code into words + an emoji.
-function describeWeather(code) {
-  if (code === 0) return { text: t("wClear"), emoji: "☀️" };
-  if (code === 1) return { text: t("wMostlyClear"), emoji: "🌤️" };
-  if (code === 2) return { text: t("wPartlyCloudy"), emoji: "⛅" };
+// F20: isNight = true swaps sunny icons for night ones (a moon instead of a sun).
+function describeWeather(code, isNight) {
+  if (code === 0) {
+    return isNight ? { text: t("wClearNight"), emoji: "🌙" } : { text: t("wClear"), emoji: "☀️" };
+  }
+  if (code === 1) return { text: t("wMostlyClear"), emoji: isNight ? "🌙" : "🌤️" };
+  if (code === 2) return { text: t("wPartlyCloudy"), emoji: isNight ? "☁️" : "⛅" };
   if (code === 3) return { text: t("wOvercast"), emoji: "☁️" };
   if (code === 45 || code === 48) return { text: t("wFog"), emoji: "🌫️" };
-  if (code >= 51 && code <= 57) return { text: t("wDrizzle"), emoji: "🌦️" };
+  if (code >= 51 && code <= 57) return { text: t("wDrizzle"), emoji: isNight ? "🌧️" : "🌦️" };
   if (code >= 61 && code <= 67) return { text: t("wRain"), emoji: "🌧️" };
   if (code >= 71 && code <= 77) return { text: t("wSnow"), emoji: "❄️" };
   if (code >= 80 && code <= 82) return { text: t("wRainShowers"), emoji: "🌧️" };
@@ -362,7 +365,7 @@ function showResult() {
   const place = lastResult.place;
   const current = lastResult.current;
   const daily = lastResult.daily;
-  const info = describeWeather(current.weather_code);
+  const info = describeWeather(current.weather_code, current.is_day === 0);   // F20: 0 = it is dark there now
   const rainChance = daily.precipitation_probability_max[0]; // today's chance of rain
 
   cityNameEl.textContent = formatPlace(place);
@@ -422,7 +425,7 @@ async function runLookup(findPlace) {
     // Coordinates -> current weather + 7-day forecast (always in °C)
     const weatherUrl =
       "https://api.open-meteo.com/v1/forecast" +
-      "?current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code" +
+      "?current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,is_day" +
       "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max" +
       "&forecast_days=7&timezone=auto" +
       "&latitude=" + latitude +
