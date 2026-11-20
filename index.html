@@ -9,23 +9,30 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <!-- Words marked data-i18n are filled in by script.js in English or Dutch (F17) -->
   <main class="container">
     <h1>🌿 Weather Buddy</h1>
-    <p class="subtitle">What should I wear today?</p>
+    <p class="subtitle" data-i18n="tagline">What should I wear today?</p>
 
     <!-- F1: type a city and search -->
     <form id="search-form">
-      <input id="city-input" type="text" placeholder="Type a city, e.g. London" autocomplete="off">
-      <button type="submit">Search</button>
+      <input id="city-input" type="text" placeholder="Type a city, e.g. London" data-i18n-placeholder="placeholder" autocomplete="off">
+      <button type="submit" data-i18n="search">Search</button>
     </form>
 
     <!-- F12: use my location -->
-    <button type="button" id="location-button" class="location-button">📍 Use my location</button>
+    <button type="button" id="location-button" class="location-button" data-i18n="useLocation">📍 Use my location</button>
 
     <!-- F8: °C / °F switch -->
-    <div class="unit-switch" role="group" aria-label="Temperature unit">
+    <div class="unit-switch" role="group" aria-label="Temperature unit" data-i18n-aria="unitLabel">
       <button type="button" id="unit-c" class="unit active">°C</button>
       <button type="button" id="unit-f" class="unit">°F</button>
+    </div>
+
+    <!-- F17: UK / NL language switch -->
+    <div class="unit-switch" role="group" aria-label="Language" data-i18n-aria="langLabel">
+      <button type="button" id="lang-en" class="unit active">UK</button>
+      <button type="button" id="lang-nl" class="unit">NL</button>
     </div>
 
     <!-- F9: recent cities -->
@@ -46,10 +53,10 @@
 
       <!-- F5: extra details -->
       <div class="details">
-        <div><span id="feels"></span><small>Feels like</small></div>
-        <div><span id="humidity"></span><small>Humidity</small></div>
-        <div><span id="wind"></span><small>Wind</small></div>
-        <div><span id="rain"></span><small>Chance of rain</small></div>
+        <div><span id="feels"></span><small data-i18n="feels">Feels like</small></div>
+        <div><span id="humidity"></span><small data-i18n="humidity">Humidity</small></div>
+        <div><span id="wind"></span><small data-i18n="wind">Wind</small></div>
+        <div><span id="rain"></span><small data-i18n="rain">Chance of rain</small></div>
       </div>
 
       <p class="advice" id="advice"></p>
@@ -57,12 +64,12 @@
 
     <!-- F6: 7-day forecast -->
     <section id="forecast-section" hidden>
-      <h3>7-day forecast</h3>
+      <h3 data-i18n="forecastTitle">7-day forecast</h3>
       <div class="forecast" id="forecast"></div>
     </section>
   </main>
 
-  <footer class="footer">Weather Buddy · Version 6</footer>
+  <footer class="footer" data-i18n="footer">Weather Buddy · Version 7</footer>
 
   <script src="script.js"></script>
 </body>

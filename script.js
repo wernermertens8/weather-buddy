@@ -1,4 +1,4 @@
-// Weather Buddy - Version 6
+// Weather Buddy - Version 7
 // Steps: city name -> coordinates (geocoding) -> weather -> show it.
 // All temperatures are stored in °C. We convert to °F only when showing them.
 
@@ -21,15 +21,109 @@ const forecastSectionEl = document.getElementById("forecast-section");
 const forecastEl = document.getElementById("forecast");
 const unitCButton = document.getElementById("unit-c");
 const unitFButton = document.getElementById("unit-f");
+const langEnButton = document.getElementById("lang-en");
+const langNlButton = document.getElementById("lang-nl");
 const recentEl = document.getElementById("recent");
 const alternativesEl = document.getElementById("alternatives");
 
 // The app's memory while it is open
-let unit = "C";          // "C" or "F"
-let lastMatches = [];    // places found for the last city search (for the "other places" buttons)
-let lastResult = null;   // the last weather we fetched (so the switch can redraw it)
+let unit = "C";            // "C" or "F"
+let language = "en";       // "en" (UK button) or "nl" (NL button)
+let lastMatches = [];      // places found for the last city search (for the "other places" buttons)
+let lastAlternatives = null; // { typedName, others } currently offered as buttons (so they can be redrawn)
+let lastResult = null;     // the last weather we fetched (so the switches can redraw it)
+let currentMessageKey = ""; // which message is showing (so it can be redrawn in another language)
 
-// ---------- Saving in the browser (F9, F10) ----------
+// ---------- F17: all the words, in English and Dutch ----------
+const TEXT = {
+  en: {
+    pageTitle: "Weather Buddy",
+    tagline: "What should I wear today?",
+    placeholder: "Type a city, e.g. London",
+    search: "Search",
+    useLocation: "📍 Use my location",
+    unitLabel: "Temperature unit",
+    langLabel: "Language",
+    feels: "Feels like",
+    humidity: "Humidity",
+    wind: "Wind",
+    rain: "Chance of rain",
+    forecastTitle: "7-day forecast",
+    today: "Today",
+    footer: "Weather Buddy · Version 7",
+    otherPlaces: function (name) { return "Other places called " + name + ":"; },
+    yourLocation: "Your location",
+    // messages
+    loading: "Looking up the weather... ⏳",
+    emptyCity: "Please type a city name first. 🏙️",
+    notFound: "Hmm, I can't find that city. Check the spelling? 🤔",
+    noReach: "Oops, I can't reach the weather service. Check your internet and try again. 📡",
+    geoUnsupported: "Sorry, this browser can't share your location. Try typing a city instead. 🏙️",
+    geoBlocked: "Location is blocked. Allow it in your browser (the 📍 icon near the address bar) or type a city instead. 🔒",
+    geoTimeout: "Finding your location took too long. Try again or type a city instead. ⏱️",
+    geoFailed: "Sorry, I couldn't find your location. Try typing a city instead. 🏙️",
+    // weather descriptions
+    wClear: "Clear sky", wMostlyClear: "Mostly clear", wPartlyCloudy: "Partly cloudy", wOvercast: "Overcast",
+    wFog: "Foggy", wDrizzle: "Drizzle", wRain: "Rain", wSnow: "Snow",
+    wRainShowers: "Rain showers", wSnowShowers: "Snow showers", wThunder: "Thunderstorm", wUnknown: "Unknown weather",
+    // outfit advice
+    advFreezing: "Freezing! Wear a heavy coat, hat, gloves and a scarf. 🧣",
+    advCold: "Cold. Wear a warm coat and a sweater. 🧥",
+    advCool: "Cool. A light jacket or a sweater will do. 🧶",
+    advMild: "Mild. A T-shirt is fine, maybe bring a light layer. 👕",
+    advHot: "Hot! Wear light clothes and drink water. 🩳",
+    advSnow: " Wear waterproof boots. 🥾",
+    advWet: " It's wet, so take an umbrella or a raincoat. ☔",
+    advMaybeRain: " Rain is possible today, so pack an umbrella. 🌂",
+    advWindy: " It's windy, so a windproof layer helps. 💨"
+  },
+  nl: {
+    pageTitle: "Weather Buddy",
+    tagline: "Wat moet ik vandaag aantrekken?",
+    placeholder: "Typ een stad, bv. Londen",
+    search: "Zoeken",
+    useLocation: "📍 Mijn locatie gebruiken",
+    unitLabel: "Temperatuureenheid",
+    langLabel: "Taal",
+    feels: "Voelt als",
+    humidity: "Luchtvochtigheid",
+    wind: "Wind",
+    rain: "Kans op regen",
+    forecastTitle: "Weersverwachting 7 dagen",
+    today: "Vandaag",
+    footer: "Weather Buddy · Versie 7",
+    otherPlaces: function (name) { return "Andere plaatsen met de naam " + name + ":"; },
+    yourLocation: "Jouw locatie",
+    loading: "Het weer wordt opgezocht... ⏳",
+    emptyCity: "Typ eerst de naam van een stad. 🏙️",
+    notFound: "Hmm, die stad kan ik niet vinden. Klopt de spelling? 🤔",
+    noReach: "Oeps, ik kan de weerdienst niet bereiken. Controleer je internet en probeer het opnieuw. 📡",
+    geoUnsupported: "Sorry, deze browser kan je locatie niet delen. Typ in plaats daarvan een stad. 🏙️",
+    geoBlocked: "Locatie is geblokkeerd. Sta het toe in je browser (het 📍-icoon bij de adresbalk) of typ een stad. 🔒",
+    geoTimeout: "Je locatie vinden duurde te lang. Probeer het opnieuw of typ een stad. ⏱️",
+    geoFailed: "Sorry, ik kon je locatie niet vinden. Typ in plaats daarvan een stad. 🏙️",
+    wClear: "Heldere lucht", wMostlyClear: "Grotendeels helder", wPartlyCloudy: "Half bewolkt", wOvercast: "Bewolkt",
+    wFog: "Mistig", wDrizzle: "Motregen", wRain: "Regen", wSnow: "Sneeuw",
+    wRainShowers: "Regenbuien", wSnowShowers: "Sneeuwbuien", wThunder: "Onweer", wUnknown: "Onbekend weer",
+    advFreezing: "Vrieskou! Draag een dikke jas, muts, handschoenen en een sjaal. 🧣",
+    advCold: "Koud. Draag een warme jas en een trui. 🧥",
+    advCool: "Fris. Een licht jasje of een trui is genoeg. 🧶",
+    advMild: "Zacht. Een T-shirt is prima, neem eventueel een extra laagje mee. 👕",
+    advHot: "Heet! Draag lichte kleding en drink water. 🩳",
+    advSnow: " Draag waterdichte laarzen. 🥾",
+    advWet: " Het is nat, dus neem een paraplu of regenjas mee. ☔",
+    advMaybeRain: " Er is vandaag kans op regen, dus neem een paraplu mee. 🌂",
+    advWindy: " Het waait, dus een winddichte laag helpt. 💨"
+  }
+};
+
+// Look up a word in the chosen language. Extra arguments go to text that is a function.
+function t(key, arg) {
+  const value = TEXT[language][key];
+  return typeof value === "function" ? value(arg) : value;
+}
+
+// ---------- Saving in the browser (F9, F10, F18) ----------
 // localStorage can fail (e.g. private mode), so we wrap it to keep the app working.
 function loadSaved(key, fallback) {
   try {
@@ -51,18 +145,18 @@ function save(key, value) {
 // ---------- Weather words and emojis ----------
 // Open-Meteo gives weather as a number code. This turns each code into words + an emoji.
 function describeWeather(code) {
-  if (code === 0) return { text: "Clear sky", emoji: "☀️" };
-  if (code === 1) return { text: "Mostly clear", emoji: "🌤️" };
-  if (code === 2) return { text: "Partly cloudy", emoji: "⛅" };
-  if (code === 3) return { text: "Overcast", emoji: "☁️" };
-  if (code === 45 || code === 48) return { text: "Foggy", emoji: "🌫️" };
-  if (code >= 51 && code <= 57) return { text: "Drizzle", emoji: "🌦️" };
-  if (code >= 61 && code <= 67) return { text: "Rain", emoji: "🌧️" };
-  if (code >= 71 && code <= 77) return { text: "Snow", emoji: "❄️" };
-  if (code >= 80 && code <= 82) return { text: "Rain showers", emoji: "🌧️" };
-  if (code === 85 || code === 86) return { text: "Snow showers", emoji: "🌨️" };
-  if (code >= 95) return { text: "Thunderstorm", emoji: "⛈️" };
-  return { text: "Unknown weather", emoji: "🌍" };
+  if (code === 0) return { text: t("wClear"), emoji: "☀️" };
+  if (code === 1) return { text: t("wMostlyClear"), emoji: "🌤️" };
+  if (code === 2) return { text: t("wPartlyCloudy"), emoji: "⛅" };
+  if (code === 3) return { text: t("wOvercast"), emoji: "☁️" };
+  if (code === 45 || code === 48) return { text: t("wFog"), emoji: "🌫️" };
+  if (code >= 51 && code <= 57) return { text: t("wDrizzle"), emoji: "🌦️" };
+  if (code >= 61 && code <= 67) return { text: t("wRain"), emoji: "🌧️" };
+  if (code >= 71 && code <= 77) return { text: t("wSnow"), emoji: "❄️" };
+  if (code >= 80 && code <= 82) return { text: t("wRainShowers"), emoji: "🌧️" };
+  if (code === 85 || code === 86) return { text: t("wSnowShowers"), emoji: "🌨️" };
+  if (code >= 95) return { text: t("wThunder"), emoji: "⛈️" };
+  return { text: t("wUnknown"), emoji: "🌍" };
 }
 
 // Is it wet outside? (drizzle, rain, showers, thunderstorm)
@@ -78,16 +172,16 @@ function isSnowing(code) {
 // Outfit advice. Uses "feels like" (°C), wind and rain chance.
 function outfitAdvice(feelsLike, code, windKmh, rainChance) {
   let advice;
-  if (feelsLike < 0) advice = "Freezing! Wear a heavy coat, hat, gloves and a scarf. 🧣";
-  else if (feelsLike < 10) advice = "Cold. Wear a warm coat and a sweater. 🧥";
-  else if (feelsLike < 18) advice = "Cool. A light jacket or a sweater will do. 🧶";
-  else if (feelsLike < 25) advice = "Mild. A T-shirt is fine, maybe bring a light layer. 👕";
-  else advice = "Hot! Wear light clothes and drink water. 🩳";
+  if (feelsLike < 0) advice = t("advFreezing");
+  else if (feelsLike < 10) advice = t("advCold");
+  else if (feelsLike < 18) advice = t("advCool");
+  else if (feelsLike < 25) advice = t("advMild");
+  else advice = t("advHot");
 
-  if (isSnowing(code)) advice += " Wear waterproof boots. 🥾";
-  if (isRaining(code)) advice += " It's wet, so take an umbrella or a raincoat. ☔";
-  else if (rainChance >= 40) advice += " Rain is possible today, so pack an umbrella. 🌂";
-  if (windKmh >= 30) advice += " It's windy, so a windproof layer helps. 💨";
+  if (isSnowing(code)) advice += t("advSnow");
+  if (isRaining(code)) advice += t("advWet");
+  else if (rainChance >= 40) advice += t("advMaybeRain");
+  if (windKmh >= 30) advice += t("advWindy");
   return advice;
 }
 
@@ -114,14 +208,46 @@ function setUnit(newUnit) {
 }
 
 // ---------- Messages ----------
-function showMessage(text) {
-  messageEl.textContent = text;
-  messageEl.hidden = text === "";
+// We keep the message's KEY (not its words), so it can be shown again in another language.
+function showMessage(key) {
+  currentMessageKey = key;
+  messageEl.textContent = key === "" ? "" : t(key);
+  messageEl.hidden = key === "";
+}
+
+// ---------- F17: switching the language ----------
+// Put the right words on everything that is written directly in index.html
+function applyStaticText() {
+  document.documentElement.lang = language;
+  document.title = t("pageTitle");
+  document.querySelectorAll("[data-i18n]").forEach(function (el) {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(function (el) {
+    el.placeholder = t(el.dataset.i18nPlaceholder);
+  });
+  document.querySelectorAll("[data-i18n-aria]").forEach(function (el) {
+    el.setAttribute("aria-label", t(el.dataset.i18nAria));
+  });
+  langEnButton.classList.toggle("active", language === "en");
+  langNlButton.classList.toggle("active", language === "nl");
+}
+
+function setLanguage(newLanguage) {
+  language = newLanguage;
+  save("weatherBuddyLanguage", language);   // F18: remember the choice
+  applyStaticText();
+  showMessage(currentMessageKey);           // redraw the message, if any
+  if (lastResult) showResult();             // redraw weather words, advice and weekdays
+  if (lastResult && lastAlternatives) {
+    showAlternatives(lastAlternatives.typedName, lastAlternatives.others);
+  }
 }
 
 // ---------- Place names ----------
 // "London, Ontario, Canada": name, then region, then country (skipping empty or repeated parts)
 function formatPlace(place) {
+  if (place.isMyLocation && place.name === "") return "📍 " + t("yourLocation");
   const parts = [place.name];
   if (place.admin1 && place.admin1 !== place.name) parts.push(place.admin1);
   if (place.country) parts.push(place.country);
@@ -179,13 +305,14 @@ function showRecent() {
 
 // ---------- F15: other places with the same name ----------
 function showAlternatives(typedName, others) {
+  lastAlternatives = others.length === 0 ? null : { typedName: typedName, others: others };
   alternativesEl.innerHTML = "";
   if (others.length === 0) {
     alternativesEl.hidden = true;
     return;
   }
   const title = document.createElement("p");
-  title.textContent = "Other places called " + typedName + ":";
+  title.textContent = t("otherPlaces", typedName);
   alternativesEl.appendChild(title);
 
   others.forEach(function (other) {
@@ -206,10 +333,15 @@ function showAlternatives(typedName, others) {
 // Draw the forecast rows
 function showForecast(daily) {
   forecastEl.innerHTML = "";
+  const locale = language === "nl" ? "nl-NL" : "en-US";
   for (let i = 0; i < daily.time.length; i++) {
     // "T12:00" avoids the date shifting to another day because of time zones
     const date = new Date(daily.time[i] + "T12:00:00");
-    const name = i === 0 ? "Today" : date.toLocaleDateString("en-US", { weekday: "short" });
+    let name = t("today");
+    if (i > 0) {
+      name = date.toLocaleDateString(locale, { weekday: "short" });
+      name = name.charAt(0).toUpperCase() + name.slice(1);   // "ma" -> "Ma"
+    }
     const info = describeWeather(daily.weather_code[i]);
 
     const row = document.createElement("div");
@@ -224,7 +356,7 @@ function showForecast(daily) {
   }
 }
 
-// Draw everything from lastResult, using the chosen unit
+// Draw everything from lastResult, using the chosen unit and language
 function showResult() {
   const place = lastResult.place;
   const current = lastResult.current;
@@ -267,8 +399,9 @@ async function runLookup(findPlace) {
   resultEl.hidden = true;
   forecastSectionEl.hidden = true;
   alternativesEl.hidden = true;
+  lastAlternatives = null;
   lastResult = null;
-  showMessage("Looking up the weather... ⏳");   // F11: loading message
+  showMessage("loading");   // F11: loading message
   // Note: we do NOT disable the buttons while waiting. If the browser's location prompt
   // stays open, you can still type a city. Slow, outdated searches are ignored instead.
 
@@ -306,8 +439,7 @@ async function runLookup(findPlace) {
   } catch (error) {
     // Show a friendly message (ignore if a newer search took over)
     if (!isOutdated()) {
-      showMessage(error.friendly ||
-        "Oops, I can't reach the weather service. Check your internet and try again. 📡");
+      showMessage(error.friendlyKey || "noReach");
     }
   }
 }
@@ -325,17 +457,18 @@ function showPlace(place, others) {
 function search(cityName) {
   input.value = cityName;   // keep the box in sync with what is being shown
   runLookup(async function (isOutdated) {
-    // City name -> up to 10 matching places (latitude, longitude, region, country)
+    // City name -> up to 10 matching places (latitude, longitude, region, country).
+    // F19: "language" makes the place names come back in English or Dutch.
     const geoUrl =
-      "https://geocoding-api.open-meteo.com/v1/search?count=10&name=" +
-      encodeURIComponent(cityName);
+      "https://geocoding-api.open-meteo.com/v1/search?count=10&language=" + language +
+      "&name=" + encodeURIComponent(cityName);
     const geoResponse = await fetch(geoUrl);
     if (!geoResponse.ok) throw new Error("geocoding failed");
     const geoData = await geoResponse.json();
     if (isOutdated()) return null;
 
     if (!geoData.results || geoData.results.length === 0) {
-      showMessage("Hmm, I can't find that city. Check the spelling? 🤔");
+      showMessage("notFound");
       return null;
     }
 
@@ -370,26 +503,23 @@ function search(cityName) {
 function getMyPosition() {
   return new Promise(function (resolve, reject) {
     if (!navigator.geolocation) {
-      reject({ friendly: "Sorry, this browser can't share your location. Try typing a city instead. 🏙️" });
+      reject({ friendlyKey: "geoUnsupported" });
       return;
     }
     navigator.geolocation.getCurrentPosition(
       function (position) { resolve(position); },
       function (error) {
-        let text = "Sorry, I couldn't find your location. Try typing a city instead. 🏙️";
-        if (error.code === 1) {
-          text = "Location is blocked. Allow it in your browser (the 📍 icon near the address bar) or type a city instead. 🔒";
-        } else if (error.code === 3) {
-          text = "Finding your location took too long. Try again or type a city instead. ⏱️";
-        }
-        reject({ friendly: text });
+        let key = "geoFailed";
+        if (error.code === 1) key = "geoBlocked";
+        else if (error.code === 3) key = "geoTimeout";
+        reject({ friendlyKey: key });
       },
       { timeout: 10000 }
     );
   });
 }
 
-// F14: turn coordinates into a place name like "Brussels, Belgium".
+// F14: turn coordinates into a place name like "Brussels, Belgium" (or "Brussel, België" in Dutch).
 // Open-Meteo can't do this, so we ask the free BigDataCloud service.
 // If anything goes wrong we return "" and the app shows "Your location" instead.
 async function findPlaceName(latitude, longitude) {
@@ -397,7 +527,7 @@ async function findPlaceName(latitude, longitude) {
     const controller = new AbortController();
     const timer = setTimeout(function () { controller.abort(); }, 5000);   // give up after 5 seconds
     const url =
-      "https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=en" +
+      "https://api.bigdatacloud.net/data/reverse-geocode-client?localityLanguage=" + language +
       "&latitude=" + latitude + "&longitude=" + longitude;
     const response = await fetch(url, { signal: controller.signal });
     clearTimeout(timer);
@@ -421,7 +551,9 @@ function useMyLocation() {
     const placeName = await findPlaceName(latitude, longitude);
     return {
       place: {
-        name: "📍 " + (placeName || "Your location"),
+        // an empty name means "show 'Your location' in whatever language is chosen"
+        name: placeName === "" ? "" : "📍 " + placeName,
+        isMyLocation: true,
         country: "",
         latitude: latitude,
         longitude: longitude
@@ -442,8 +574,9 @@ form.addEventListener("submit", function (event) {
     resultEl.hidden = true;
     forecastSectionEl.hidden = true;
     alternativesEl.hidden = true;
+    lastAlternatives = null;
     lastResult = null;
-    showMessage("Please type a city name first. 🏙️");
+    showMessage("emptyCity");
     return;
   }
   search(city);
@@ -454,7 +587,12 @@ locationButton.addEventListener("click", useMyLocation);
 unitCButton.addEventListener("click", function () { setUnit("C"); });
 unitFButton.addEventListener("click", function () { setUnit("F"); });
 
-// When the page opens: load the saved unit and recent cities
+langEnButton.addEventListener("click", function () { setLanguage("en"); });
+langNlButton.addEventListener("click", function () { setLanguage("nl"); });
+
+// When the page opens: load the saved language, unit and recent cities
+language = loadSaved("weatherBuddyLanguage", "en") === "nl" ? "nl" : "en";
 unit = loadSaved("weatherBuddyUnit", "C") === "F" ? "F" : "C";
+applyStaticText();
 updateUnitButtons();
 showRecent();
